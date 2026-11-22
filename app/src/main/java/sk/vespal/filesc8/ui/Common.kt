@@ -504,7 +504,7 @@ fun BottomNav(tab: Int, onTab: (Int) -> Unit) {
     Column(Modifier.fillMaxWidth().background(C.Surface)) {
         Box(Modifier.fillMaxWidth().height(1.dp).background(C.Line))
         Row(
-            Modifier.fillMaxWidth().navigationBarsPadding().height(72.dp),
+            Modifier.fillMaxWidth().navigationBarsPadding().height(64.dp),
             horizontalArrangement = Arrangement.SpaceEvenly,
             verticalAlignment = Alignment.CenterVertically
         ) {
@@ -512,7 +512,7 @@ fun BottomNav(tab: Int, onTab: (Int) -> Unit) {
                 val on = i == tab
                 Column(
                     Modifier.clip(RoundedCornerShape(16.dp)).clickable(role = Role.Tab) { onTab(i) }
-                        .padding(horizontal = 12.dp, vertical = 6.dp),
+                        .padding(horizontal = 12.dp, vertical = 4.dp),
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
                     Box(
@@ -538,9 +538,9 @@ fun BottomNav(tab: Int, onTab: (Int) -> Unit) {
 @Composable
 fun LangSwitch() {
     val ctx = LocalContext.current
-    val shape = RoundedCornerShape(16.dp)
+    val shape = RoundedCornerShape(12.dp)
     Row(
-        Modifier.clip(shape).background(C.Surface).border(1.dp, C.Line, shape).padding(4.dp),
+        Modifier.clip(shape).background(C.Surface).border(1.dp, C.Line, shape).padding(2.dp),
         horizontalArrangement = Arrangement.spacedBy(2.dp)
     ) {
         LangButton("SK", Lang.code == "sk", { slovakFlag() }) { Lang.set(ctx, "sk") }
@@ -551,21 +551,21 @@ fun LangSwitch() {
 @Composable
 private fun LangButton(code: String, selected: Boolean, flag: DrawScope.() -> Unit, onClick: () -> Unit) {
     Row(
-        Modifier.height(36.dp).clip(RoundedCornerShape(12.dp))
+        Modifier.height(30.dp).clip(RoundedCornerShape(10.dp))
             .background(if (selected) C.AccentSoft else Color.Transparent)
             .clickable(role = Role.Button, onClick = onClick)
-            .padding(horizontal = 10.dp),
+            .padding(horizontal = 7.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
         Box(
-            Modifier.size(width = 24.dp, height = 16.dp).clip(RoundedCornerShape(3.dp))
+            Modifier.size(width = 18.dp, height = 12.dp).clip(RoundedCornerShape(2.dp))
                 .border(0.5.dp, Color(0x330F172A), RoundedCornerShape(3.dp))
         ) {
-            Canvas(Modifier.size(width = 24.dp, height = 16.dp)) { flag() }
+            Canvas(Modifier.size(width = 18.dp, height = 12.dp)) { flag() }
         }
-        Spacer(Modifier.width(6.dp))
+        Spacer(Modifier.width(4.dp))
         Text(
-            code, color = if (selected) C.Accent else C.Muted, fontSize = 13.sp,
+            code, color = if (selected) C.Accent else C.Muted, fontSize = 11.sp,
             fontWeight = if (selected) FontWeight.ExtraBold else FontWeight.SemiBold
         )
     }

@@ -51,6 +51,7 @@ import sk.vespal.filesc8.FItem
 import sk.vespal.filesc8.Repo
 import sk.vespal.filesc8.Sug
 import sk.vespal.filesc8.tr
+import sk.vespal.filesc8.typeCat
 
 @Composable
 fun HomeScreen(
@@ -84,18 +85,15 @@ fun HomeScreen(
         ) {
             item {
                 Row(
-                    Modifier.fillMaxWidth().statusBarsPadding().padding(start = 20.dp, end = 16.dp, top = 12.dp),
+                    Modifier.fillMaxWidth().statusBarsPadding().padding(start = 18.dp, end = 14.dp, top = 10.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Column(Modifier.weight(1f)) {
-                        Text(tr("Správca súborov", "File manager"), fontSize = 13.sp, color = C.Muted, fontWeight = FontWeight.Medium)
-                        Text(tr("Súbory", "Files"), fontSize = 28.sp, color = C.Ink, fontWeight = FontWeight.ExtraBold)
-                    }
+                    Text(tr("Súbory", "Files"), fontSize = 24.sp, color = C.Ink, fontWeight = FontWeight.ExtraBold, modifier = Modifier.weight(1f))
                     LangSwitch()
                 }
             }
             item {
-                SearchField(query, { query = it }, Modifier.padding(start = 16.dp, end = 16.dp, top = 14.dp))
+                SearchField(query, { query = it }, Modifier.padding(start = 14.dp, end = 14.dp, top = 10.dp))
             }
             if (Repo.loading && !snap.loaded) {
                 item {
@@ -132,49 +130,61 @@ fun HomeScreen(
                 }
                 item { Spacer(Modifier.height(90.dp)) }
             } else {
-                item { StorageCard(onClean, Modifier.padding(start = 16.dp, end = 16.dp, top = 16.dp)) }
+                item { StorageCard(onClean, Modifier.padding(start = 14.dp, end = 14.dp, top = 10.dp)) }
                 item {
-                    SectionTitle(tr("Kategórie", "Categories"), Modifier.padding(start = 16.dp, end = 16.dp, top = 22.dp, bottom = 10.dp))
+                    Text(
+                        tr("Kategórie", "Categories"), fontSize = 15.sp, fontWeight = FontWeight.ExtraBold, color = C.Ink,
+                        modifier = Modifier.padding(start = 16.dp, top = 14.dp, bottom = 8.dp)
+                    )
                 }
-                items(Cat.entries.chunked(2)) { pair ->
+                items(Cat.entries.chunked(4)) { row ->
                     Row(
-                        Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 5.dp),
-                        horizontalArrangement = Arrangement.spacedBy(10.dp)
+                        Modifier.fillMaxWidth().padding(start = 14.dp, end = 14.dp, bottom = 8.dp),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
-                        for (c in pair) CategoryTile(c, Modifier.weight(1f)) { onCategory(c) }
-                        if (pair.size == 1) Spacer(Modifier.weight(1f))
+                        for (c in row) CategoryTile(c, Modifier.weight(1f)) { onCategory(c) }
+                        repeat(4 - row.size) { Spacer(Modifier.weight(1f)) }
                     }
                 }
-                val recent = snap.files.take(20)
+                val recent = snap.files.filter { it.isImage || it.isVideo }.take(20)
                 if (recent.isNotEmpty()) {
                     item {
-                        SectionTitle(tr("Nedávne", "Recent"), Modifier.padding(start = 16.dp, end = 8.dp, top = 22.dp, bottom = 6.dp))
+                        Row(
+                            Modifier.fillMaxWidth().padding(start = 16.dp, end = 6.dp, top = 6.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Text(tr("Nedávne", "Recent"), fontSize = 15.sp, fontWeight = FontWeight.ExtraBold, color = C.Ink, modifier = Modifier.weight(1f))
+                            Text(
+                                tr("Všetko", "All"), color = C.Accent, fontSize = 13.sp, fontWeight = FontWeight.SemiBold,
+                                modifier = Modifier.clip(RoundedCornerShape(8.dp)).clickable { onCategory(Cat.IMAGES) }.padding(8.dp)
+                            )
+                        }
                     }
                     item {
                         LazyRow(
-                            contentPadding = PaddingValues(horizontal = 16.dp),
-                            horizontalArrangement = Arrangement.spacedBy(12.dp)
+                            contentPadding = PaddingValues(horizontal = 14.dp),
+                            horizontalArrangement = Arrangement.spacedBy(8.dp)
                         ) {
                             items(recent, key = { it.path }) { f -> RecentCard(f) { openFile(ctx, f) } }
                         }
                     }
                 }
                 item {
-                    SectionTitle(tr("Zbierky", "Collections"), Modifier.padding(start = 16.dp, end = 16.dp, top = 22.dp, bottom = 10.dp))
-                }
-                item {
-                    Row(Modifier.fillMaxWidth().padding(horizontal = 16.dp), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                        CollectionCard(
+                    Row(
+                        Modifier.fillMaxWidth().padding(start = 14.dp, end = 14.dp, top = 14.dp),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        CollectionChip(
                             Icons.Rounded.Star, C.Star, C.StarSoft, tr("Obľúbené", "Favorites"),
-                            filesWord(Repo.favorites.size), Modifier.weight(1f), onFavorites
+                            Repo.favorites.size.toString(), Modifier.weight(1f), onFavorites
                         )
-                        CollectionCard(
+                        CollectionChip(
                             Icons.Rounded.BarChart, Color(0xFF7C3AED), Color(0xFFF0EAFE), tr("Veľké", "Large"),
-                            filesWord(Repo.sugItems(Sug.BIG, snap).size), Modifier.weight(1f), onBig
+                            Repo.sugItems(Sug.BIG, snap).size.toString(), Modifier.weight(1f), onBig
                         )
-                        CollectionCard(
-                            Icons.Rounded.PhoneAndroid, C.Accent, C.AccentSoft, tr("Úložisko", "Storage"),
-                            tr("Priečinky", "Folders"), Modifier.weight(1f), onBrowse
+                        CollectionChip(
+                            Icons.Rounded.PhoneAndroid, C.Accent, C.AccentSoft, tr("Priečinky", "Folders"),
+                            "", Modifier.weight(1f), onBrowse
                         )
                     }
                 }
@@ -211,70 +221,80 @@ fun HomeScreen(
 
 @Composable
 private fun SearchField(value: String, onChange: (String) -> Unit, modifier: Modifier = Modifier) {
-    val shape = RoundedCornerShape(26.dp)
+    val shape = RoundedCornerShape(20.dp)
     Row(
-        modifier.fillMaxWidth().height(52.dp).clip(shape).background(C.Surface).border(1.dp, C.Line, shape)
-            .padding(start = 16.dp, end = 6.dp),
+        modifier.fillMaxWidth().height(40.dp).clip(shape).background(C.Surface).border(1.dp, C.Line, shape)
+            .padding(start = 14.dp, end = 2.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
-        Icon(Icons.Rounded.Search, null, tint = C.Muted, modifier = Modifier.size(20.dp))
-        Box(Modifier.weight(1f).padding(horizontal = 10.dp)) {
+        Icon(Icons.Rounded.Search, null, tint = C.Muted, modifier = Modifier.size(18.dp))
+        Box(Modifier.weight(1f).padding(horizontal = 8.dp)) {
             if (value.isEmpty()) {
-                Text(tr("Hľadať súbory, napr. „faktúra“", "Search files, e.g. “invoice”"), color = C.Muted, fontSize = 15.sp, maxLines = 1)
+                Text(tr("Hľadať súbory", "Search files"), color = C.Muted, fontSize = 14.sp, maxLines = 1)
             }
             BasicTextField(
                 value = value,
                 onValueChange = onChange,
                 singleLine = true,
-                textStyle = TextStyle(color = C.Ink, fontSize = 15.sp),
+                textStyle = TextStyle(color = C.Ink, fontSize = 14.sp),
                 cursorBrush = SolidColor(C.Accent),
                 modifier = Modifier.fillMaxWidth()
             )
         }
         if (value.isNotEmpty()) {
-            RoundIconButton(Icons.Rounded.Close, tr("Vymazať hľadanie", "Clear search"), tint = C.Muted) { onChange("") }
+            Box(
+                Modifier.size(36.dp).clip(CircleShape).clickable { onChange("") },
+                contentAlignment = Alignment.Center
+            ) {
+                Icon(Icons.Rounded.Close, tr("Vymazať hľadanie", "Clear search"), tint = C.Muted, modifier = Modifier.size(18.dp))
+            }
         }
     }
 }
 
-@OptIn(ExperimentalLayoutApi::class)
 @Composable
 private fun StorageCard(onClean: () -> Unit, modifier: Modifier = Modifier) {
     val snap = Repo.snap
     val total = snap.total
     val used = snap.used
     val pct = if (total > 0) used.toFloat() / total else 0f
-    Panel(modifier.fillMaxWidth(), radius = 22.dp) {
-        Column(Modifier.padding(18.dp)) {
+    Panel(modifier.fillMaxWidth(), radius = 18.dp) {
+        Column(Modifier.padding(start = 14.dp, end = 12.dp, top = 12.dp, bottom = 12.dp)) {
             Row(verticalAlignment = Alignment.CenterVertically) {
-                Box(Modifier.size(84.dp), contentAlignment = Alignment.Center) {
+                Box(Modifier.size(56.dp), contentAlignment = Alignment.Center) {
                     Canvas(Modifier.fillMaxSize()) {
-                        val sw = 10.dp.toPx()
+                        val sw = 7.dp.toPx()
                         val inset = sw / 2
                         val arcSize = Size(size.width - sw, size.height - sw)
                         drawArc(C.AccentSoft, 0f, 360f, false, Offset(inset, inset), arcSize, style = Stroke(sw))
                         drawArc(C.Accent, -90f, 360f * pct, false, Offset(inset, inset), arcSize, style = Stroke(sw, cap = StrokeCap.Round))
                     }
-                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                        Text("${(pct * 100).toInt()} %", fontSize = 17.sp, fontWeight = FontWeight.ExtraBold, color = C.Ink)
-                        Text(tr("využité", "used"), fontSize = 10.sp, color = C.Muted)
-                    }
+                    Text("${(pct * 100).toInt()}%", fontSize = 13.sp, fontWeight = FontWeight.ExtraBold, color = C.Ink)
                 }
-                Column(Modifier.weight(1f).padding(start = 16.dp)) {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Icon(Icons.Rounded.PhoneAndroid, null, tint = C.Muted, modifier = Modifier.size(16.dp))
-                        Text(tr("Interné úložisko", "Internal storage"), fontSize = 13.sp, color = C.Muted, modifier = Modifier.padding(start = 4.dp))
-                    }
-                    Row(verticalAlignment = Alignment.Bottom, modifier = Modifier.padding(top = 4.dp)) {
-                        Text(fmtSize(used), fontSize = 22.sp, fontWeight = FontWeight.ExtraBold, color = C.Ink)
+                Column(Modifier.weight(1f).padding(start = 12.dp)) {
+                    Row(verticalAlignment = Alignment.Bottom) {
+                        Text(fmtSize(used), fontSize = 17.sp, fontWeight = FontWeight.ExtraBold, color = C.Ink)
                         Text(
-                            tr(" z ${fmtSize(total)}", " of ${fmtSize(total)}"), fontSize = 14.sp,
-                            fontWeight = FontWeight.SemiBold, color = C.Muted, modifier = Modifier.padding(bottom = 2.dp)
+                            tr(" z ${fmtSize(total)}", " of ${fmtSize(total)}"), fontSize = 12.sp,
+                            fontWeight = FontWeight.SemiBold, color = C.Muted, modifier = Modifier.padding(bottom = 1.dp)
                         )
                     }
                     Text(
-                        tr("Voľné: ${fmtSize(snap.free)}", "Free: ${fmtSize(snap.free)}"),
-                        fontSize = 13.sp, color = C.Green, fontWeight = FontWeight.SemiBold, modifier = Modifier.padding(top = 2.dp)
+                        tr("Voľné ${fmtSize(snap.free)}", "Free ${fmtSize(snap.free)}"),
+                        fontSize = 12.sp, color = C.Green, fontWeight = FontWeight.SemiBold
+                    )
+                }
+                val freeable = Repo.freeable(snap)
+                Row(
+                    Modifier.height(40.dp).clip(RoundedCornerShape(12.dp)).background(C.Accent)
+                        .clickable(onClick = onClean).padding(horizontal = 12.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Icon(Icons.Rounded.DeleteSweep, null, tint = Color.White, modifier = Modifier.size(16.dp))
+                    Text(
+                        if (freeable > 0) tr("Uvoľniť ${fmtSize(freeable)}", "Free ${fmtSize(freeable)}") else tr("Vyčistiť", "Clean"),
+                        color = Color.White, fontWeight = FontWeight.Bold, fontSize = 13.sp, maxLines = 1,
+                        modifier = Modifier.padding(start = 6.dp)
                     )
                 }
             }
@@ -285,11 +305,11 @@ private fun StorageCard(onClean: () -> Unit, modifier: Modifier = Modifier) {
             val known = parts.sumOf { it.second }
             val other = (used - known).coerceAtLeast(0)
             Row(
-                Modifier.padding(top = 16.dp).fillMaxWidth().height(10.dp).clip(RoundedCornerShape(5.dp)).background(Color(0xFFEEF1F6))
+                Modifier.padding(top = 10.dp).fillMaxWidth().height(8.dp).clip(RoundedCornerShape(4.dp)).background(Color(0xFFEEF1F6))
             ) {
                 if (total > 0) {
-                    for ((c, s) in parts) {
-                        val w = s.toFloat() / total
+                    for ((c, sz) in parts) {
+                        val w = sz.toFloat() / total
                         if (w > 0.002f) Box(Modifier.fillMaxHeight().weight(w).background(c.color))
                     }
                     val wo = other.toFloat() / total
@@ -298,88 +318,89 @@ private fun StorageCard(onClean: () -> Unit, modifier: Modifier = Modifier) {
                     if (wf > 0.002f) Spacer(Modifier.fillMaxHeight().weight(wf))
                 }
             }
-            FlowRow(
-                Modifier.padding(top = 10.dp),
-                horizontalArrangement = Arrangement.spacedBy(14.dp),
-                verticalArrangement = Arrangement.spacedBy(6.dp)
-            ) {
-                for ((c, s) in parts) if (s > 0) Legend(c.color, "${c.label} ${fmtSize(s)}")
-                if (other > 0) Legend(C.Faint, tr("Ostatné ${fmtSize(other)}", "Other ${fmtSize(other)}"))
-            }
-
-            val freeable = Repo.freeable(snap)
-            Row(
-                Modifier.padding(top = 14.dp).fillMaxWidth().height(48.dp).clip(RoundedCornerShape(14.dp))
-                    .background(C.Accent).clickable(onClick = onClean),
-                horizontalArrangement = Arrangement.Center,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Icon(Icons.Rounded.DeleteSweep, null, tint = Color.White, modifier = Modifier.size(18.dp))
-                Text(
-                    if (freeable > 0) tr("Uvoľniť ${fmtSize(freeable)}", "Free up ${fmtSize(freeable)}") else tr("Vyčistiť", "Clean up"),
-                    color = Color.White, fontWeight = FontWeight.Bold, fontSize = 15.sp, modifier = Modifier.padding(start = 8.dp)
-                )
-            }
         }
-    }
-}
-
-@Composable
-private fun Legend(color: Color, text: String) {
-    Row(verticalAlignment = Alignment.CenterVertically) {
-        Box(Modifier.size(8.dp).clip(CircleShape).background(color))
-        Text(text, fontSize = 12.sp, color = C.Muted, modifier = Modifier.padding(start = 6.dp))
     }
 }
 
 @Composable
 private fun CategoryTile(c: Cat, modifier: Modifier, onClick: () -> Unit) {
     val snap = Repo.snap
-    val shape = RoundedCornerShape(18.dp)
+    val shape = RoundedCornerShape(16.dp)
     Column(
         modifier.clip(shape).background(C.Surface).border(1.dp, C.Line, shape).clickable(onClick = onClick)
-            .padding(horizontal = 12.dp, vertical = 14.dp)
+            .padding(start = 4.dp, end = 4.dp, top = 10.dp, bottom = 9.dp),
+        horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        IconTile(c.icon, c.color, size = 42.dp, radius = 13.dp, iconSize = 21.dp)
+        IconTile(c.icon, c.color, size = 38.dp, radius = 12.dp, iconSize = 19.dp)
         Text(
-            c.label, fontSize = 15.sp, fontWeight = FontWeight.Bold, color = C.Ink, maxLines = 1,
-            overflow = TextOverflow.Ellipsis, modifier = Modifier.padding(top = 10.dp)
+            shortLabel(c), fontSize = 12.sp, fontWeight = FontWeight.Bold, color = C.Ink, maxLines = 1,
+            overflow = TextOverflow.Ellipsis, modifier = Modifier.padding(top = 6.dp)
         )
-        Row(Modifier.padding(top = 2.dp)) {
-            Text(fmtCount(snap.catCount(c)) + " · ", fontSize = 12.sp, color = C.Muted)
-            Text(fmtSize(snap.catSize(c)), fontSize = 12.sp, color = c.color, fontWeight = FontWeight.SemiBold)
-        }
+        Text(fmtSize(snap.catSize(c)), fontSize = 11.sp, color = c.color, fontWeight = FontWeight.SemiBold, maxLines = 1)
     }
+}
+
+/** Kratšie názvy pre úzke dlaždice. */
+private fun shortLabel(c: Cat): String = when (c) {
+    Cat.ARCHIVES -> tr("Archívy", "Archives")
+    Cat.SCREENSHOTS -> tr("Snímky", "Screens")
+    else -> c.label
+}
+
+private fun fmtDuration(ms: Long): String {
+    val s = ms / 1000
+    return if (s >= 3600) String.format(java.util.Locale.US, "%d:%02d:%02d", s / 3600, (s / 60) % 60, s % 60)
+    else String.format(java.util.Locale.US, "%d:%02d", s / 60, s % 60)
 }
 
 @Composable
 private fun RecentCard(f: FItem, onClick: () -> Unit) {
-    Column(Modifier.width(128.dp).clip(RoundedCornerShape(16.dp)).clickable(onClick = onClick)) {
-        FileThumb(f, Modifier.width(128.dp).height(144.dp).clip(RoundedCornerShape(16.dp)), iconSize = 34.dp)
-        Text(
-            f.name, fontSize = 13.sp, fontWeight = FontWeight.SemiBold, color = C.Ink, maxLines = 1,
-            overflow = TextOverflow.Ellipsis, modifier = Modifier.padding(top = 8.dp, start = 2.dp, end = 2.dp)
-        )
-        Text(fmtSize(f.size), fontSize = 12.sp, color = C.Muted, modifier = Modifier.padding(start = 2.dp, bottom = 4.dp))
+    val shape = RoundedCornerShape(16.dp)
+    Box(Modifier.width(112.dp).height(136.dp).clip(shape).clickable(onClick = onClick)) {
+        FileThumb(f, Modifier.fillMaxSize(), iconSize = 32.dp)
+        val t = f.typeCat()
+        if (t != null) {
+            Box(Modifier.align(Alignment.TopStart).padding(6.dp)) {
+                IconTile(t.icon, t.color, size = 24.dp, radius = 8.dp, iconSize = 13.dp)
+            }
+        }
+        if (f.isVideo && f.duration > 0) {
+            Badge(fmtDuration(f.duration), Modifier.align(Alignment.BottomStart))
+        }
+        Badge(fmtSize(f.size), Modifier.align(Alignment.BottomEnd))
     }
 }
 
 @Composable
-private fun CollectionCard(
+private fun Badge(text: String, modifier: Modifier) {
+    Text(
+        text, color = Color.White, fontSize = 11.sp, fontWeight = FontWeight.SemiBold, maxLines = 1,
+        modifier = modifier.padding(6.dp).clip(RoundedCornerShape(6.dp)).background(Color(0x8C000000))
+            .padding(horizontal = 6.dp, vertical = 2.dp)
+    )
+}
+
+@Composable
+private fun CollectionChip(
     icon: androidx.compose.ui.graphics.vector.ImageVector,
     color: Color,
     tint: Color,
     title: String,
-    sub: String,
+    count: String,
     modifier: Modifier,
     onClick: () -> Unit,
 ) {
-    val shape = RoundedCornerShape(18.dp)
-    Column(
-        modifier.clip(shape).background(C.Surface).border(1.dp, C.Line, shape).clickable(onClick = onClick).padding(12.dp)
+    val shape = RoundedCornerShape(14.dp)
+    Row(
+        modifier.height(44.dp).clip(shape).background(C.Surface).border(1.dp, C.Line, shape).clickable(onClick = onClick)
+            .padding(horizontal = 8.dp),
+        verticalAlignment = Alignment.CenterVertically
     ) {
-        SoftTile(icon, color, tint, size = 36.dp, radius = 12.dp, iconSize = 20.dp)
-        Text(title, fontSize = 14.sp, fontWeight = FontWeight.Bold, color = C.Ink, modifier = Modifier.padding(top = 8.dp), maxLines = 1)
-        Text(sub, fontSize = 12.sp, color = C.Muted, maxLines = 1, overflow = TextOverflow.Ellipsis)
+        SoftTile(icon, color, tint, size = 28.dp, radius = 9.dp, iconSize = 16.dp)
+        Text(
+            title, fontSize = 13.sp, fontWeight = FontWeight.Bold, color = C.Ink, maxLines = 1,
+            overflow = TextOverflow.Ellipsis, modifier = Modifier.weight(1f).padding(start = 6.dp)
+        )
+        if (count.isNotEmpty()) Text(count, fontSize = 12.sp, color = C.Muted)
     }
 }

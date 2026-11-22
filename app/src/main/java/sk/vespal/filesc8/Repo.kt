@@ -56,6 +56,7 @@ data class FItem(
     val size: Long,
     val modified: Long,
     val mime: String,
+    val duration: Long = 0,
 ) {
     val ext: String get() = name.substringAfterLast('.', "").lowercase()
     val isImage: Boolean get() = mime.startsWith("image/")
@@ -192,6 +193,7 @@ object Repo {
             MediaStore.Files.FileColumns.SIZE,
             MediaStore.Files.FileColumns.DATE_MODIFIED,
             MediaStore.Files.FileColumns.MIME_TYPE,
+            MediaStore.MediaColumns.DURATION,
         )
         val sel = "${MediaStore.Files.FileColumns.SIZE} > 0"
         ctx.contentResolver.query(uri, proj, sel, null, "${MediaStore.Files.FileColumns.DATE_MODIFIED} DESC")?.use { c ->
@@ -201,6 +203,7 @@ object Repo {
             val iSize = c.getColumnIndexOrThrow(MediaStore.Files.FileColumns.SIZE)
             val iDate = c.getColumnIndexOrThrow(MediaStore.Files.FileColumns.DATE_MODIFIED)
             val iMime = c.getColumnIndexOrThrow(MediaStore.Files.FileColumns.MIME_TYPE)
+            val iDur = c.getColumnIndex(MediaStore.MediaColumns.DURATION)
             while (c.moveToNext()) {
                 val path = c.getString(iData) ?: continue
                 if (path.contains("/.")) continue // skryté súbory a priečinky
@@ -214,6 +217,7 @@ object Repo {
                     size = c.getLong(iSize),
                     modified = c.getLong(iDate) * 1000L,
                     mime = mime ?: mimeOf(name),
+                    duration = if (iDur >= 0 && !c.isNull(iDur)) c.getLong(iDur) else 0L,
                 )
             }
         }
