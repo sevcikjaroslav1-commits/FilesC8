@@ -65,6 +65,7 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.content.FileProvider
+import androidx.core.graphics.drawable.toBitmap
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import sk.vespal.filesc8.FItem
@@ -193,7 +194,18 @@ object Thumbs {
 
     fun peek(path: String): Bitmap? = cache.get(path)
 
-    fun load(item: FItem): Bitmap? {
+    /** Ikona aplikácie priamo z APK súboru (ako v pôvodnej aplikácii Súbory). */
+    private fun apkIcon(ctx: Context, path: String): Bitmap? {
+        val pm = ctx.packageManager
+        @Suppress("DEPRECATION")
+        val info = pm.getPackageArchiveInfo(path, 0) ?: return null
+        val ai = info.applicationInfo ?: return null
+        ai.sourceDir = path
+        ai.publicSourceDir = path
+        return ai.loadIcon(pm).toBitmap(192, 192)
+    }
+
+    fun load(ctx: Context, item: FItem): Bitmap? {
         cache.get(item.path)?.let { return it }
         synchronized(misses) { if (item.path in misses) return null }
         val f = File(item.path)
@@ -203,6 +215,7 @@ object Thumbs {
                 item.isImage -> ThumbnailUtils.createImageThumbnail(f, sz, null)
                 item.isVideo -> ThumbnailUtils.createVideoThumbnail(f, sz, null)
                 item.isAudio -> ThumbnailUtils.createAudioThumbnail(f, sz, null)
+                item.ext == "apk" -> apkIcon(ctx, item.path)
                 else -> null
             }
         } catch (e: Throwable) {
@@ -215,11 +228,12 @@ object Thumbs {
 
 @Composable
 fun FileThumb(item: FItem, modifier: Modifier = Modifier, iconSize: Dp = 24.dp, showPlay: Boolean = true) {
+    val ctx = LocalContext.current
     val t = item.typeCat()
-    val canThumb = item.isImage || item.isVideo || item.isAudio
+    val canThumb = item.isImage || item.isVideo || item.isAudio || item.ext == "apk"
     val bmp: ImageBitmap? by produceState<ImageBitmap?>(Thumbs.peek(item.path)?.asImageBitmap(), item.path) {
         if (value == null && canThumb) {
-            value = withContext(Dispatchers.IO) { Thumbs.load(item) }?.asImageBitmap()
+            value = withContext(Dispatchers.IO) { Thumbs.load(ctx, item) }?.asImageBitmap()
         }
     }
     Box(modifier.background(t?.tint ?: C.Bg), contentAlignment = Alignment.Center) {
@@ -233,11 +247,12 @@ fun FileThumb(item: FItem, modifier: Modifier = Modifier, iconSize: Dp = 24.dp, 
             )
         }
         if (item.isVideo && showPlay && b != null) {
+            val ps = if (iconSize < 28.dp) 22.dp else 30.dp
             Box(
-                Modifier.size(30.dp).clip(CircleShape).background(Color.White.copy(alpha = 0.92f)),
+                Modifier.size(ps).clip(CircleShape).background(Color.White.copy(alpha = 0.92f)),
                 contentAlignment = Alignment.Center
             ) {
-                Icon(Icons.Rounded.PlayArrow, null, tint = Color(0xFF7C3AED), modifier = Modifier.size(20.dp))
+                Icon(Icons.Rounded.PlayArrow, null, tint = Color(0xFF7C3AED), modifier = Modifier.size(ps * 0.66f))
             }
         }
     }
@@ -380,7 +395,7 @@ fun FileRow(
             .padding(horizontal = 10.dp, vertical = 9.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
-        FileThumb(item, Modifier.size(48.dp).clip(RoundedCornerShape(12.dp)), iconSize = 24.dp, showPlay = false)
+        FileThumb(item, Modifier.size(48.dp).clip(RoundedCornerShape(12.dp)), iconSize = 24.dp)
         Column(Modifier.weight(1f).padding(horizontal = 12.dp)) {
             Text(item.name, fontSize = 15.sp, fontWeight = FontWeight.SemiBold, color = C.Ink, maxLines = 1, overflow = TextOverflow.Ellipsis)
             val meta = buildString {
