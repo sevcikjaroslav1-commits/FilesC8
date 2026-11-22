@@ -23,6 +23,7 @@ import androidx.compose.material.icons.rounded.RepeatOne
 import androidx.compose.material.icons.rounded.Shuffle
 import androidx.compose.material.icons.rounded.Share
 import androidx.compose.material.icons.rounded.Speaker
+import androidx.compose.material.icons.rounded.Headphones
 import androidx.compose.material.icons.rounded.Wifi
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.material.icons.rounded.SkipNext
@@ -198,7 +199,7 @@ private fun CircleBtn(icon: ImageVector, label: String, size: Dp, bg: Color, tin
 }
 
 @Composable
-private fun ActionPill(icon: ImageVector, label: String, color: Color, bg: Color, border: Color, modifier: Modifier, onClick: () -> Unit) {
+private fun ActionPill(icon: ImageVector, label: String, color: Color, bg: Color, border: Color, modifier: Modifier, icon2: ImageVector? = null, onClick: () -> Unit) {
     val shape = RoundedCornerShape(14.dp)
     Column(
         modifier.height(56.dp).clip(shape).background(bg).border(1.dp, border, shape)
@@ -206,7 +207,13 @@ private fun ActionPill(icon: ImageVector, label: String, color: Color, bg: Color
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
     ) {
-        Icon(icon, null, tint = color, modifier = Modifier.size(20.dp))
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Icon(icon, null, tint = color, modifier = Modifier.size(20.dp))
+            if (icon2 != null) {
+                // malá ikonka bezdrôtových slúchadiel
+                Icon(icon2, null, tint = color, modifier = Modifier.padding(start = 3.dp).size(15.dp))
+            }
+        }
         Text(
             label, color = color, fontSize = 12.sp, fontWeight = FontWeight.Bold, maxLines = 1, softWrap = false,
             overflow = TextOverflow.Ellipsis, modifier = Modifier.padding(top = 3.dp)
@@ -258,7 +265,7 @@ fun AudioScreen() {
             ActionPill(Icons.Rounded.Wifi, "Wi‑Fi / BT", Color(0xFF1D4ED8), Color(0xFFE8EFFE), Color(0xFFC3D4FB), Modifier.weight(1f)) {
                 nearby = true
             }
-            ActionPill(Icons.Rounded.Speaker, tr("BT reproduktor", "BT speaker"), Color(0xFF6D28D9), Color(0xFFF0EAFE), Color(0xFFD7C8FB), Modifier.weight(1f)) {
+            ActionPill(Icons.Rounded.Speaker, tr("BT reproduktor", "BT speaker"), Color(0xFF6D28D9), Color(0xFFF0EAFE), Color(0xFFD7C8FB), Modifier.weight(1f), icon2 = Icons.Rounded.Headphones) {
                 openOutputSwitcher(ctx)
             }
         }
