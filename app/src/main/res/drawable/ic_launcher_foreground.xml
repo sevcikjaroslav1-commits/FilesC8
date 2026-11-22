@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <!-- zadná časť priečinka -->
+    <path
+        android:fillColor="#FFC7C4FA"
+        android:pathData="M34,38 Q34,34 38,34 L49,34 L54,39 L70,39 Q74,39 74,43 L74,48 L34,48 Z" />
+    <!-- predná časť priečinka -->
+    <path
+        android:fillColor="#FFFFFFFF"
+        android:pathData="M34,46 Q34,43 37,43 L71,43 Q74,43 74,46 L74,70 Q74,74 70,74 L38,74 Q34,74 34,70 Z" />
+    <!-- farebné kategórie -->
+    <path android:fillColor="#FF2563EB" android:pathData="M41,57 m-4,0 a4,4 0 1,0 8,0 a4,4 0 1,0 -8,0" />
+    <path android:fillColor="#FFDB2777" android:pathData="M51,57 m-4,0 a4,4 0 1,0 8,0 a4,4 0 1,0 -8,0" />
+    <path android:fillColor="#FF7C3AED" android:pathData="M61,57 m-4,0 a4,4 0 1,0 8,0 a4,4 0 1,0 -8,0" />
+    <path android:fillColor="#FFEA580C" android:pathData="M41,66 m-4,0 a4,4 0 1,0 8,0 a4,4 0 1,0 -8,0" />
+    <path android:fillColor="#FF0D9488" android:pathData="M51,66 m-4,0 a4,4 0 1,0 8,0 a4,4 0 1,0 -8,0" />
+    <path android:fillColor="#FF16A34A" android:pathData="M61,66 m-4,0 a4,4 0 1,0 8,0 a4,4 0 1,0 -8,0" />
+</vector>
