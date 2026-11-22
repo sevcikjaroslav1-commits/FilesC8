@@ -44,6 +44,8 @@ fun AppRoot(hasAccess: Boolean, requestAccess: () -> Unit) {
         if (!hasAccess) PermissionScreen(requestAccess) else MainContent()
         // vstavaný prehliadač fotiek a videí – cez celú obrazovku
         if (hasAccess && Viewer.open) ViewerScreen()
+        // hudobný prehrávač cez celú obrazovku
+        if (hasAccess && Audio.showFull && Audio.queue.isNotEmpty()) AudioScreen()
     }
 }
 
@@ -114,6 +116,7 @@ private fun MainContent() {
                     Screen.Apps -> AppsScreen(onBack = { pop() })
                 }
             }
+            if (Audio.queue.isNotEmpty() && !Audio.showFull) MiniPlayer()
             if (stack.isEmpty()) BottomNav(tab) { tab = it }
         }
     }

@@ -42,6 +42,11 @@ class MainActivity : ComponentActivity() {
         if (hasAccess) Repo.refresh(this)
     }
 
+    override fun onDestroy() {
+        if (isFinishing) sk.vespal.filesc8.ui.Audio.stop()
+        super.onDestroy()
+    }
+
     private fun requestAccess() {
         try {
             startActivity(

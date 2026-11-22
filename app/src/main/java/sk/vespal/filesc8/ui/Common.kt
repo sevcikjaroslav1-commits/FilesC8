@@ -152,6 +152,11 @@ fun openFile(ctx: Context, item: FItem, list: List<FItem> = listOf(item)) {
         Viewer.show(media, media.indexOfFirst { it.path == item.path }.coerceAtLeast(0))
         return
     }
+    if (item.isAudio) {
+        val songs = list.filter { it.isAudio }.ifEmpty { listOf(item) }
+        Audio.play(ctx, songs, songs.indexOfFirst { it.path == item.path }.coerceAtLeast(0))
+        return
+    }
     openExternal(ctx, item)
 }
 
