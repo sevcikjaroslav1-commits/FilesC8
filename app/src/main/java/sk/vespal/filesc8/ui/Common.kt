@@ -247,6 +247,8 @@ fun FileThumb(item: FItem, modifier: Modifier = Modifier, iconSize: Dp = 24.dp, 
     val t = item.typeCat()
     val canThumb = item.isImage || item.isVideo || item.isAudio || item.ext == "apk"
     val bmp: ImageBitmap? by produceState<ImageBitmap?>(Thumbs.peek(item.path)?.asImageBitmap(), item.path) {
+        // pri zmene súboru (napr. ďalšia pesnička) najprv zahodiť starý obrázok
+        value = Thumbs.peek(item.path)?.asImageBitmap()
         if (value == null && canThumb) {
             value = withContext(Dispatchers.IO) { Thumbs.load(ctx, item) }?.asImageBitmap()
         }
