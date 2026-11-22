@@ -42,6 +42,8 @@ sealed interface Screen {
 fun AppRoot(hasAccess: Boolean, requestAccess: () -> Unit) {
     Box(Modifier.fillMaxSize().background(C.Bg)) {
         if (!hasAccess) PermissionScreen(requestAccess) else MainContent()
+        // vstavaný prehliadač fotiek a videí – cez celú obrazovku
+        if (hasAccess && Viewer.open) ViewerScreen()
     }
 }
 

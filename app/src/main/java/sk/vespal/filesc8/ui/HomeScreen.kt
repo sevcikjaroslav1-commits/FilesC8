@@ -140,7 +140,7 @@ fun HomeScreen(
                             f, sel, selection.isNotEmpty(),
                             onClick = {
                                 if (selection.isNotEmpty()) { if (sel) selection.remove(f.path) else selection.add(f.path) }
-                                else openFile(ctx, f)
+                                else openFile(ctx, f, results)
                             },
                             onLongClick = { if (sel) selection.remove(f.path) else selection.add(f.path) }
                         )
@@ -188,7 +188,7 @@ fun HomeScreen(
                                     f, sel, selection.isNotEmpty(),
                                     onClick = {
                                         if (selection.isNotEmpty()) { if (sel) selection.remove(f.path) else selection.add(f.path) }
-                                        else openFile(ctx, f)
+                                        else openFile(ctx, f, recent)
                                     },
                                     onLongClick = { if (sel) selection.remove(f.path) else selection.add(f.path) }
                                 )

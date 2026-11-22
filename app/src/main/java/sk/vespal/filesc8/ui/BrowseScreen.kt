@@ -209,7 +209,7 @@ fun BrowseScreen(onFavorites: () -> Unit) {
                             }, onLongClick = toggle)
                         } else {
                             FileRow(e.item, sel, selection.isNotEmpty(), onClick = {
-                                if (selection.isNotEmpty()) toggle() else openFile(ctx, e.item)
+                                if (selection.isNotEmpty()) toggle() else openFile(ctx, e.item, list.filter { !it.isDir }.map { it.item })
                             }, onLongClick = toggle, showFolder = false)
                         }
                     }

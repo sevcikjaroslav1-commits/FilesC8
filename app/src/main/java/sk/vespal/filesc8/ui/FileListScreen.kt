@@ -168,7 +168,7 @@ fun FileListScreen(
                         sort = sort,
                         showFolder = p == 0,
                         selection = selection,
-                        onOpen = { openFile(ctx, it) },
+                        onOpen = { openFile(ctx, it, list) },
                         emptyText = emptyText,
                         color = color,
                         tint = tint,

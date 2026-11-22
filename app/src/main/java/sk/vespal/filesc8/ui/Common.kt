@@ -145,7 +145,17 @@ fun filesWord(n: Int): String = if (Lang.code == "en") {
 private fun uriFor(ctx: Context, path: String): Uri =
     FileProvider.getUriForFile(ctx, ctx.packageName + ".files", File(path))
 
-fun openFile(ctx: Context, item: FItem) {
+/** Fotky a videá otvorí vo vstavanom prehliadači (s možnosťou listovať v [list]), ostatné v inej aplikácii. */
+fun openFile(ctx: Context, item: FItem, list: List<FItem> = listOf(item)) {
+    if (item.isImage || item.isVideo) {
+        val media = list.filter { it.isImage || it.isVideo }.ifEmpty { listOf(item) }
+        Viewer.show(media, media.indexOfFirst { it.path == item.path }.coerceAtLeast(0))
+        return
+    }
+    openExternal(ctx, item)
+}
+
+fun openExternal(ctx: Context, item: FItem) {
     try {
         val mime = if (item.mime == "*/*") mimeOf(item.name) else item.mime
         val i = Intent(Intent.ACTION_VIEW)
