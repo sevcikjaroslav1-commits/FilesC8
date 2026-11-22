@@ -20,6 +20,8 @@ import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -324,7 +326,13 @@ fun TopBar(
 
 @Composable
 fun ChipsRow(labels: List<String>, selected: Int, color: Color, onSelect: (Int) -> Unit) {
+    val listState = rememberLazyListState()
+    // vybrané tlačidlo vždy viditeľné (aj pri prepínaní potiahnutím)
+    LaunchedEffect(selected) {
+        if (selected in labels.indices) listState.animateScrollToItem((selected - 1).coerceAtLeast(0))
+    }
     LazyRow(
+        state = listState,
         contentPadding = PaddingValues(horizontal = 16.dp, vertical = 6.dp),
         horizontalArrangement = Arrangement.spacedBy(8.dp)
     ) {
