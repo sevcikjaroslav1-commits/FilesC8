@@ -39,6 +39,9 @@ import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.unit.Density
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
@@ -51,6 +54,9 @@ import sk.vespal.filesc8.FItem
 import sk.vespal.filesc8.Repo
 import sk.vespal.filesc8.Sug
 import sk.vespal.filesc8.tr
+import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.buildAnnotatedString
+import androidx.compose.ui.text.withStyle
 import sk.vespal.filesc8.typeCat
 
 @Composable
@@ -78,6 +84,9 @@ fun HomeScreen(
     BackHandler(enabled = selection.isNotEmpty()) { selection.clear() }
     BackHandler(enabled = selection.isEmpty() && searching) { query = "" }
 
+    // Úvodná obrazovka má pevné rozloženie na 1 stranu – príliš veľké systémové písmo ho rozbíja.
+    val dens = LocalDensity.current
+    CompositionLocalProvider(LocalDensity provides Density(dens.density, dens.fontScale.coerceAtMost(1f))) {
     Box(Modifier.fillMaxSize()) {
         LazyColumn(
             Modifier.fillMaxSize(),
@@ -134,7 +143,7 @@ fun HomeScreen(
                 item {
                     Text(
                         tr("Kategórie", "Categories"), fontSize = 15.sp, fontWeight = FontWeight.ExtraBold, color = C.Ink,
-                        modifier = Modifier.padding(start = 16.dp, top = 14.dp, bottom = 8.dp)
+                        modifier = Modifier.padding(start = 16.dp, top = 12.dp, bottom = 6.dp)
                     )
                 }
                 items(Cat.entries.chunked(4)) { row ->
@@ -150,7 +159,7 @@ fun HomeScreen(
                 if (recent.isNotEmpty()) {
                     item {
                         Row(
-                            Modifier.fillMaxWidth().padding(start = 16.dp, end = 6.dp, top = 6.dp),
+                            Modifier.fillMaxWidth().padding(start = 16.dp, end = 6.dp, top = 2.dp),
                             verticalAlignment = Alignment.CenterVertically
                         ) {
                             Text(tr("Nedávne", "Recent"), fontSize = 15.sp, fontWeight = FontWeight.ExtraBold, color = C.Ink, modifier = Modifier.weight(1f))
@@ -171,7 +180,7 @@ fun HomeScreen(
                 }
                 item {
                     Row(
-                        Modifier.fillMaxWidth().padding(start = 14.dp, end = 14.dp, top = 14.dp),
+                        Modifier.fillMaxWidth().padding(start = 14.dp, end = 14.dp, top = 10.dp),
                         horizontalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
                         CollectionChip(
@@ -205,6 +214,7 @@ fun HomeScreen(
                 )
             }
         }
+    }
     }
 
     if (askDelete) {
@@ -259,42 +269,49 @@ private fun StorageCard(onClean: () -> Unit, modifier: Modifier = Modifier) {
     val used = snap.used
     val pct = if (total > 0) used.toFloat() / total else 0f
     Panel(modifier.fillMaxWidth(), radius = 18.dp) {
-        Column(Modifier.padding(start = 14.dp, end = 12.dp, top = 12.dp, bottom = 12.dp)) {
+        Column(Modifier.padding(start = 12.dp, end = 10.dp, top = 10.dp, bottom = 10.dp)) {
             Row(verticalAlignment = Alignment.CenterVertically) {
-                Box(Modifier.size(56.dp), contentAlignment = Alignment.Center) {
+                Box(Modifier.size(50.dp), contentAlignment = Alignment.Center) {
                     Canvas(Modifier.fillMaxSize()) {
-                        val sw = 7.dp.toPx()
+                        val sw = 6.dp.toPx()
                         val inset = sw / 2
                         val arcSize = Size(size.width - sw, size.height - sw)
                         drawArc(C.AccentSoft, 0f, 360f, false, Offset(inset, inset), arcSize, style = Stroke(sw))
                         drawArc(C.Accent, -90f, 360f * pct, false, Offset(inset, inset), arcSize, style = Stroke(sw, cap = StrokeCap.Round))
                     }
-                    Text("${(pct * 100).toInt()}%", fontSize = 13.sp, fontWeight = FontWeight.ExtraBold, color = C.Ink)
+                    Text("${(pct * 100).toInt()}%", fontSize = 12.sp, fontWeight = FontWeight.ExtraBold, color = C.Ink, maxLines = 1, softWrap = false)
                 }
-                Column(Modifier.weight(1f).padding(start = 12.dp)) {
-                    Row(verticalAlignment = Alignment.Bottom) {
-                        Text(fmtSize(used), fontSize = 17.sp, fontWeight = FontWeight.ExtraBold, color = C.Ink)
-                        Text(
-                            tr(" z ${fmtSize(total)}", " of ${fmtSize(total)}"), fontSize = 12.sp,
-                            fontWeight = FontWeight.SemiBold, color = C.Muted, modifier = Modifier.padding(bottom = 1.dp)
-                        )
-                    }
+                Column(Modifier.weight(1f).padding(start = 10.dp, end = 8.dp)) {
+                    Text(
+                        buildAnnotatedString {
+                            withStyle(SpanStyle(fontSize = 16.sp, fontWeight = FontWeight.ExtraBold, color = C.Ink)) { append(fmtSize(used)) }
+                            withStyle(SpanStyle(fontSize = 12.sp, fontWeight = FontWeight.SemiBold, color = C.Muted)) {
+                                append(tr(" z ${fmtSize(total)}", " of ${fmtSize(total)}"))
+                            }
+                        },
+                        maxLines = 1, softWrap = false, overflow = TextOverflow.Ellipsis
+                    )
                     Text(
                         tr("Voľné ${fmtSize(snap.free)}", "Free ${fmtSize(snap.free)}"),
-                        fontSize = 12.sp, color = C.Green, fontWeight = FontWeight.SemiBold
+                        fontSize = 12.sp, color = C.Green, fontWeight = FontWeight.SemiBold, maxLines = 1, softWrap = false
                     )
                 }
                 val freeable = Repo.freeable(snap)
-                Row(
-                    Modifier.height(40.dp).clip(RoundedCornerShape(12.dp)).background(C.Accent)
-                        .clickable(onClick = onClean).padding(horizontal = 12.dp),
-                    verticalAlignment = Alignment.CenterVertically
+                Column(
+                    Modifier.clip(RoundedCornerShape(12.dp)).background(C.Accent)
+                        .clickable(onClick = onClean).padding(horizontal = 12.dp, vertical = 6.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally
                 ) {
-                    Icon(Icons.Rounded.DeleteSweep, null, tint = Color.White, modifier = Modifier.size(16.dp))
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Icon(Icons.Rounded.DeleteSweep, null, tint = Color.White, modifier = Modifier.size(14.dp))
+                        Text(
+                            tr("Uvoľniť", "Free up"), color = Color.White.copy(alpha = 0.9f), fontSize = 11.sp,
+                            fontWeight = FontWeight.SemiBold, maxLines = 1, softWrap = false, modifier = Modifier.padding(start = 4.dp)
+                        )
+                    }
                     Text(
-                        if (freeable > 0) tr("Uvoľniť ${fmtSize(freeable)}", "Free ${fmtSize(freeable)}") else tr("Vyčistiť", "Clean"),
-                        color = Color.White, fontWeight = FontWeight.Bold, fontSize = 13.sp, maxLines = 1,
-                        modifier = Modifier.padding(start = 6.dp)
+                        if (freeable > 0) fmtSize(freeable) else "0 B",
+                        color = Color.White, fontWeight = FontWeight.ExtraBold, fontSize = 14.sp, maxLines = 1, softWrap = false
                     )
                 }
             }
@@ -328,13 +345,13 @@ private fun CategoryTile(c: Cat, modifier: Modifier, onClick: () -> Unit) {
     val shape = RoundedCornerShape(16.dp)
     Column(
         modifier.clip(shape).background(C.Surface).border(1.dp, C.Line, shape).clickable(onClick = onClick)
-            .padding(start = 4.dp, end = 4.dp, top = 10.dp, bottom = 9.dp),
+            .padding(start = 4.dp, end = 4.dp, top = 8.dp, bottom = 7.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        IconTile(c.icon, c.color, size = 38.dp, radius = 12.dp, iconSize = 19.dp)
+        IconTile(c.icon, c.color, size = 34.dp, radius = 11.dp, iconSize = 18.dp)
         Text(
             shortLabel(c), fontSize = 12.sp, fontWeight = FontWeight.Bold, color = C.Ink, maxLines = 1,
-            overflow = TextOverflow.Ellipsis, modifier = Modifier.padding(top = 6.dp)
+            overflow = TextOverflow.Ellipsis, modifier = Modifier.padding(top = 5.dp)
         )
         Text(fmtSize(snap.catSize(c)), fontSize = 11.sp, color = c.color, fontWeight = FontWeight.SemiBold, maxLines = 1)
     }
@@ -356,7 +373,7 @@ private fun fmtDuration(ms: Long): String {
 @Composable
 private fun RecentCard(f: FItem, onClick: () -> Unit) {
     val shape = RoundedCornerShape(16.dp)
-    Box(Modifier.width(112.dp).height(136.dp).clip(shape).clickable(onClick = onClick)) {
+    Box(Modifier.width(104.dp).height(120.dp).clip(shape).clickable(onClick = onClick)) {
         FileThumb(f, Modifier.fillMaxSize(), iconSize = 32.dp)
         val t = f.typeCat()
         if (t != null) {
@@ -392,7 +409,7 @@ private fun CollectionChip(
 ) {
     val shape = RoundedCornerShape(14.dp)
     Row(
-        modifier.height(44.dp).clip(shape).background(C.Surface).border(1.dp, C.Line, shape).clickable(onClick = onClick)
+        modifier.height(40.dp).clip(shape).background(C.Surface).border(1.dp, C.Line, shape).clickable(onClick = onClick)
             .padding(horizontal = 8.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
