@@ -54,6 +54,11 @@ import sk.vespal.filesc8.FItem
 import sk.vespal.filesc8.Repo
 import sk.vespal.filesc8.Sug
 import sk.vespal.filesc8.tr
+import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.combinedClickable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.material.icons.rounded.CheckCircle
+import androidx.compose.material.icons.rounded.RadioButtonUnchecked
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.withStyle
@@ -80,8 +85,12 @@ fun HomeScreen(
         else snap.files.filter { it.name.contains(q, ignoreCase = true) }.take(300)
     }
     val searching = query.trim().isNotEmpty()
+    val recent: List<FItem> = remember(snap) { snap.files.filter { it.isImage || it.isVideo }.take(20) }
+    // vybrané súbory (z výsledkov hľadania alebo z Nedávnych)
+    val pool = if (searching) results else recent
 
     BackHandler(enabled = selection.isNotEmpty()) { selection.clear() }
+    LaunchedEffect(searching) { selection.clear() }
     BackHandler(enabled = selection.isEmpty() && searching) { query = "" }
 
     // Úvodná obrazovka má pevné rozloženie na 1 stranu – príliš veľké systémové písmo ho rozbíja.
@@ -155,7 +164,6 @@ fun HomeScreen(
                         repeat(4 - row.size) { Spacer(Modifier.weight(1f)) }
                     }
                 }
-                val recent = snap.files.filter { it.isImage || it.isVideo }.take(20)
                 if (recent.isNotEmpty()) {
                     item {
                         Row(
@@ -174,7 +182,17 @@ fun HomeScreen(
                             contentPadding = PaddingValues(horizontal = 14.dp),
                             horizontalArrangement = Arrangement.spacedBy(8.dp)
                         ) {
-                            items(recent, key = { it.path }) { f -> RecentCard(f) { openFile(ctx, f) } }
+                            items(recent, key = { it.path }) { f ->
+                                val sel = f.path in selection
+                                RecentCard(
+                                    f, sel, selection.isNotEmpty(),
+                                    onClick = {
+                                        if (selection.isNotEmpty()) { if (sel) selection.remove(f.path) else selection.add(f.path) }
+                                        else openFile(ctx, f)
+                                    },
+                                    onLongClick = { if (sel) selection.remove(f.path) else selection.add(f.path) }
+                                )
+                            }
                         }
                     }
                 }
@@ -201,7 +219,7 @@ fun HomeScreen(
         }
 
         if (selection.isNotEmpty()) {
-            val chosen = results.filter { it.path in selection }
+            val chosen = pool.filter { it.path in selection }
             Box(Modifier.align(Alignment.BottomCenter)) {
                 SelectionBar(
                     count = chosen.size,
@@ -218,7 +236,7 @@ fun HomeScreen(
     }
 
     if (askDelete) {
-        val chosen = results.filter { it.path in selection }
+        val chosen = pool.filter { it.path in selection }
         DeleteDialog(chosen.size, chosen.sumOf { it.size }, onConfirm = {
             askDelete = false
             scope.launch {
@@ -370,13 +388,17 @@ private fun fmtDuration(ms: Long): String {
     else String.format(java.util.Locale.US, "%d:%02d", s / 60, s % 60)
 }
 
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
-private fun RecentCard(f: FItem, onClick: () -> Unit) {
+private fun RecentCard(f: FItem, selected: Boolean, selecting: Boolean, onClick: () -> Unit, onLongClick: () -> Unit) {
     val shape = RoundedCornerShape(16.dp)
-    Box(Modifier.width(104.dp).height(120.dp).clip(shape).clickable(onClick = onClick)) {
+    Box(
+        Modifier.width(104.dp).height(120.dp).clip(shape)
+            .combinedClickable(onClick = onClick, onLongClick = onLongClick)
+    ) {
         FileThumb(f, Modifier.fillMaxSize(), iconSize = 32.dp)
         val t = f.typeCat()
-        if (t != null) {
+        if (t != null && !selecting) {
             Box(Modifier.align(Alignment.TopStart).padding(6.dp)) {
                 IconTile(t.icon, t.color, size = 24.dp, radius = 8.dp, iconSize = 13.dp)
             }
@@ -385,6 +407,13 @@ private fun RecentCard(f: FItem, onClick: () -> Unit) {
             Badge(fmtDuration(f.duration), Modifier.align(Alignment.BottomStart))
         }
         Badge(fmtSize(f.size), Modifier.align(Alignment.BottomEnd))
+        if (selecting) {
+            if (selected) Box(Modifier.fillMaxSize().background(C.Accent.copy(alpha = 0.3f)).border(3.dp, C.Accent, shape))
+            Icon(
+                if (selected) Icons.Rounded.CheckCircle else Icons.Rounded.RadioButtonUnchecked, null,
+                tint = Color.White, modifier = Modifier.align(Alignment.TopEnd).padding(6.dp).size(24.dp)
+            )
+        }
     }
 }
 
