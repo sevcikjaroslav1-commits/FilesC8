@@ -264,12 +264,14 @@ fun AudioScreen() {
         }
 
         // obal albumu
-        Box(
-            Modifier.padding(horizontal = 52.dp, vertical = 8.dp).fillMaxWidth().aspectRatio(1f)
-                .clip(RoundedCornerShape(28.dp)).background(OrangeSoft),
-            contentAlignment = Alignment.Center
-        ) {
-            FileThumb(cur, Modifier.fillMaxSize(), iconSize = 96.dp)
+        // menší obal, aby bolo dole vidieť viac skladieb
+        Box(Modifier.fillMaxWidth().padding(top = 6.dp, bottom = 6.dp), contentAlignment = Alignment.Center) {
+            Box(
+                Modifier.size(170.dp).clip(RoundedCornerShape(26.dp)).background(OrangeSoft),
+                contentAlignment = Alignment.Center
+            ) {
+                FileThumb(cur, Modifier.fillMaxSize(), iconSize = 72.dp)
+            }
         }
 
         Text(
@@ -336,7 +338,7 @@ fun AudioScreen() {
                 Row(
                     Modifier.fillMaxWidth().clip(RoundedCornerShape(12.dp))
                         .background(if (on) OrangeSoft else Color.Transparent)
-                        .clickable { Audio.playAt(i) }.padding(horizontal = 10.dp, vertical = 8.dp),
+                        .clickable { Audio.playAt(i) }.padding(horizontal = 10.dp, vertical = 7.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Icon(
