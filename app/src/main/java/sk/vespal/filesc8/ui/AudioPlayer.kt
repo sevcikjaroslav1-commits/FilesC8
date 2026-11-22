@@ -199,7 +199,7 @@ private fun CircleBtn(icon: ImageVector, label: String, size: Dp, bg: Color, tin
 }
 
 @Composable
-private fun ActionPill(icon: ImageVector, label: String, color: Color, bg: Color, border: Color, modifier: Modifier, icon2: ImageVector? = null, onClick: () -> Unit) {
+private fun ActionPill(icon: ImageVector, label: String, color: Color, bg: Color, border: Color, modifier: Modifier, icon2: ImageVector? = null, connected: Boolean = false, onClick: () -> Unit) {
     val shape = RoundedCornerShape(14.dp)
     Column(
         modifier.height(56.dp).clip(shape).background(bg).border(1.dp, border, shape)
@@ -212,6 +212,10 @@ private fun ActionPill(icon: ImageVector, label: String, color: Color, bg: Color
             if (icon2 != null) {
                 // malá ikonka bezdrôtových slúchadiel
                 Icon(icon2, null, tint = color, modifier = Modifier.padding(start = 3.dp).size(15.dp))
+            }
+            if (connected) {
+                // zelená bodka = pripojené
+                Box(Modifier.padding(start = 4.dp).size(8.dp).clip(CircleShape).background(Color(0xFF4ADE80)))
             }
         }
         Text(
@@ -265,8 +269,18 @@ fun AudioScreen() {
             ActionPill(Icons.Rounded.Wifi, "Wi‑Fi / BT", Color(0xFF1D4ED8), Color(0xFFE8EFFE), Color(0xFFC3D4FB), Modifier.weight(1f)) {
                 nearby = true
             }
-            ActionPill(Icons.Rounded.Speaker, tr("BT reproduktor", "BT speaker"), Color(0xFF6D28D9), Color(0xFFF0EAFE), Color(0xFFD7C8FB), Modifier.weight(1f), icon2 = Icons.Rounded.Headphones) {
-                openOutputSwitcher(ctx)
+            // keď je pripojený BT reproduktor/slúchadlá, tlačidlo sa vyfarbí a ukáže názov zariadenia
+            val bt = rememberBtOutput()
+            if (bt != null) {
+                ActionPill(
+                    Icons.Rounded.Speaker, bt, Color.White, Color(0xFF6D28D9), Color(0xFF6D28D9), Modifier.weight(1f),
+                    icon2 = Icons.Rounded.Headphones, connected = true
+                ) { openOutputSwitcher(ctx) }
+            } else {
+                ActionPill(
+                    Icons.Rounded.Speaker, tr("BT reproduktor", "BT speaker"), Color(0xFF6D28D9), Color(0xFFF0EAFE), Color(0xFFD7C8FB),
+                    Modifier.weight(1f), icon2 = Icons.Rounded.Headphones
+                ) { openOutputSwitcher(ctx) }
             }
         }
 

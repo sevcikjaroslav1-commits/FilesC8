@@ -5,7 +5,12 @@ import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
+import android.media.AudioDeviceCallback
+import android.media.AudioDeviceInfo
+import android.media.AudioManager
 import android.media.MediaRouter2
+import android.os.Handler
+import android.os.Looper
 import android.os.Build
 import android.provider.Settings
 import androidx.compose.foundation.background
@@ -23,6 +28,10 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -169,4 +178,42 @@ fun openBluetoothSettings(ctx: Context) {
         ctx.startActivity(Intent(Settings.ACTION_BLUETOOTH_SETTINGS).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
     } catch (_: Exception) {
     }
+}
+
+private val BT_OUTPUT_TYPES = setOf(
+    AudioDeviceInfo.TYPE_BLUETOOTH_A2DP,
+    AudioDeviceInfo.TYPE_BLUETOOTH_SCO,
+    AudioDeviceInfo.TYPE_HEARING_AID,
+    26, // TYPE_BLE_HEADSET
+    27, // TYPE_BLE_SPEAKER
+    30, // TYPE_BLE_BROADCAST
+)
+
+/**
+ * Názov pripojeného Bluetooth reproduktora / slúchadiel (alebo null, ak nie je pripojené nič).
+ * Sleduje pripájanie a odpájanie zariadení v reálnom čase.
+ */
+@Composable
+fun rememberBtOutput(): String? {
+    val ctx = LocalContext.current
+    var name by remember { mutableStateOf<String?>(null) }
+    DisposableEffect(Unit) {
+        val am = ctx.getSystemService(AudioManager::class.java)
+        fun update() {
+            val dev = try {
+                am?.getDevices(AudioManager.GET_DEVICES_OUTPUTS)?.firstOrNull { it.type in BT_OUTPUT_TYPES }
+            } catch (e: Exception) {
+                null
+            }
+            name = dev?.let { d -> d.productName?.toString()?.takeIf { it.isNotBlank() } ?: "Bluetooth" }
+        }
+        val cb = object : AudioDeviceCallback() {
+            override fun onAudioDevicesAdded(addedDevices: Array<out AudioDeviceInfo>?) = update()
+            override fun onAudioDevicesRemoved(removedDevices: Array<out AudioDeviceInfo>?) = update()
+        }
+        update()
+        am?.registerAudioDeviceCallback(cb, Handler(Looper.getMainLooper()))
+        onDispose { am?.unregisterAudioDeviceCallback(cb) }
+    }
+    return name
 }
