@@ -21,6 +21,10 @@ import androidx.compose.material.icons.rounded.PlayArrow
 import androidx.compose.material.icons.rounded.Repeat
 import androidx.compose.material.icons.rounded.RepeatOne
 import androidx.compose.material.icons.rounded.Shuffle
+import androidx.compose.material.icons.rounded.Share
+import androidx.compose.material.icons.rounded.Speaker
+import androidx.compose.material.icons.rounded.Wifi
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.material.icons.rounded.SkipNext
 import androidx.compose.material.icons.rounded.SkipPrevious
 import androidx.compose.material3.Icon
@@ -193,11 +197,31 @@ private fun CircleBtn(icon: ImageVector, label: String, size: Dp, bg: Color, tin
     }
 }
 
+@Composable
+private fun ActionPill(icon: ImageVector, label: String, color: Color, bg: Color, border: Color, modifier: Modifier, onClick: () -> Unit) {
+    val shape = RoundedCornerShape(14.dp)
+    Column(
+        modifier.height(56.dp).clip(shape).background(bg).border(1.dp, border, shape)
+            .clickable(role = Role.Button, onClick = onClick).padding(horizontal = 4.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Center
+    ) {
+        Icon(icon, null, tint = color, modifier = Modifier.size(20.dp))
+        Text(
+            label, color = color, fontSize = 12.sp, fontWeight = FontWeight.Bold, maxLines = 1, softWrap = false,
+            overflow = TextOverflow.Ellipsis, modifier = Modifier.padding(top = 3.dp)
+        )
+    }
+}
+
 /** Celoobrazovkový prehrávač hudby. */
 @Composable
 fun AudioScreen() {
     val cur = Audio.current ?: return
+    val ctx = LocalContext.current
+    var nearby by remember { mutableStateOf(false) }
     BackHandler { Audio.showFull = false }
+    if (nearby) NearbyDialog(listOf(cur)) { nearby = false }
 
     var pos by remember { mutableLongStateOf(0L) }
     var dragging by remember { mutableStateOf(false) }
@@ -223,9 +247,25 @@ fun AudioScreen() {
             RoundIconButton(Icons.Rounded.Close, tr("Zastaviť a zavrieť", "Stop and close")) { Audio.stop() }
         }
 
+        // akcie: zdieľať, poslať do blízkeho zariadenia, prehrať v BT reproduktore
+        Row(
+            Modifier.fillMaxWidth().padding(start = 16.dp, end = 16.dp, top = 4.dp, bottom = 4.dp),
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            ActionPill(Icons.Rounded.Share, tr("Zdieľať", "Share"), Color(0xFF15803D), Color(0xFFE7F6EC), Color(0xFFBFE5CB), Modifier.weight(1f)) {
+                shareFiles(ctx, listOf(cur))
+            }
+            ActionPill(Icons.Rounded.Wifi, "Wi‑Fi / BT", Color(0xFF1D4ED8), Color(0xFFE8EFFE), Color(0xFFC3D4FB), Modifier.weight(1f)) {
+                nearby = true
+            }
+            ActionPill(Icons.Rounded.Speaker, tr("BT reproduktor", "BT speaker"), Color(0xFF6D28D9), Color(0xFFF0EAFE), Color(0xFFD7C8FB), Modifier.weight(1f)) {
+                openOutputSwitcher(ctx)
+            }
+        }
+
         // obal albumu
         Box(
-            Modifier.padding(horizontal = 40.dp, vertical = 8.dp).fillMaxWidth().aspectRatio(1f)
+            Modifier.padding(horizontal = 52.dp, vertical = 8.dp).fillMaxWidth().aspectRatio(1f)
                 .clip(RoundedCornerShape(28.dp)).background(OrangeSoft),
             contentAlignment = Alignment.Center
         ) {
