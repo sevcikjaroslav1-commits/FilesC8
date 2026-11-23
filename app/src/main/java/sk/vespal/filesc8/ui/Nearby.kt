@@ -189,37 +189,23 @@ private val BT_OUTPUT_TYPES = setOf(
     30, // TYPE_BLE_BROADCAST
 )
 
-/** Názov zariadenia na zobrazenie v tlačidle. */
-fun btName(d: AudioDeviceInfo): String = d.productName?.toString()?.takeIf { it.isNotBlank() } ?: "Bluetooth"
-
-/** Prvý pripojený Bluetooth výstup (reproduktor, slúchadlá) alebo null. */
-fun findBtOutput(ctx: Context): AudioDeviceInfo? = try {
-    ctx.getSystemService(AudioManager::class.java)
-        ?.getDevices(AudioManager.GET_DEVICES_OUTPUTS)?.firstOrNull { it.type in BT_OUTPUT_TYPES }
-} catch (e: Exception) {
-    null
-}
-
-/** Reproduktor telefónu. */
-fun findPhoneSpeaker(ctx: Context): AudioDeviceInfo? = try {
-    ctx.getSystemService(AudioManager::class.java)
-        ?.getDevices(AudioManager.GET_DEVICES_OUTPUTS)?.firstOrNull { it.type == AudioDeviceInfo.TYPE_BUILTIN_SPEAKER }
-} catch (e: Exception) {
-    null
-}
-
 /**
- * Pripojený Bluetooth reproduktor / slúchadlá (alebo null, ak nie je pripojené nič).
+ * Názov pripojeného Bluetooth reproduktora / slúchadiel (alebo null, ak nie je pripojené nič).
  * Sleduje pripájanie a odpájanie zariadení v reálnom čase.
  */
 @Composable
-fun rememberBtOutput(): AudioDeviceInfo? {
+fun rememberBtOutput(): String? {
     val ctx = LocalContext.current
-    var dev by remember { mutableStateOf<AudioDeviceInfo?>(null) }
+    var name by remember { mutableStateOf<String?>(null) }
     DisposableEffect(Unit) {
         val am = ctx.getSystemService(AudioManager::class.java)
         fun update() {
-            dev = findBtOutput(ctx)
+            val dev = try {
+                am?.getDevices(AudioManager.GET_DEVICES_OUTPUTS)?.firstOrNull { it.type in BT_OUTPUT_TYPES }
+            } catch (e: Exception) {
+                null
+            }
+            name = dev?.let { d -> d.productName?.toString()?.takeIf { it.isNotBlank() } ?: "Bluetooth" }
         }
         val cb = object : AudioDeviceCallback() {
             override fun onAudioDevicesAdded(addedDevices: Array<out AudioDeviceInfo>?) = update()
@@ -229,5 +215,5 @@ fun rememberBtOutput(): AudioDeviceInfo? {
         am?.registerAudioDeviceCallback(cb, Handler(Looper.getMainLooper()))
         onDispose { am?.unregisterAudioDeviceCallback(cb) }
     }
-    return dev
+    return name
 }

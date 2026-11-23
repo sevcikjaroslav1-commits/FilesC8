@@ -26,7 +26,6 @@ import androidx.compose.material.icons.rounded.Speaker
 import androidx.compose.material.icons.rounded.Headphones
 import androidx.compose.material.icons.rounded.Wifi
 import androidx.compose.ui.platform.LocalContext
-import android.widget.Toast
 import androidx.compose.material.icons.rounded.SkipNext
 import androidx.compose.material.icons.rounded.SkipPrevious
 import androidx.compose.material3.Icon
@@ -82,10 +81,6 @@ object Audio {
     var repeat by mutableIntStateOf(0)
         private set
     var showFull by mutableStateOf(false)
-    /** true = hudba hrá cez reproduktor telefónu, aj keď sú pripojené BT slúchadlá/reproduktor */
-    var routeToPhone by mutableStateOf(false)
-        private set
-    private var appCtx: Context? = null
 
     val current: FItem? get() = queue.getOrNull(index)
     val position: Long get() = player?.currentPosition ?: 0L
@@ -111,8 +106,6 @@ object Audio {
             it.addListener(listener)
             player = it
         }
-        appCtx = ctx.applicationContext
-        applyRoute()
         queue = list
         index = start
         duration = 0L
@@ -167,31 +160,6 @@ object Audio {
         1 -> Player.REPEAT_MODE_ALL
         2 -> Player.REPEAT_MODE_ONE
         else -> Player.REPEAT_MODE_OFF
-    }
-
-    /** Prepne hudbu do telefónu (true) alebo späť do Bluetooth zariadenia (false). */
-    fun routeTo(ctx: Context, phone: Boolean) {
-        appCtx = ctx.applicationContext
-        routeToPhone = phone
-        applyRoute()
-    }
-
-    /** BT zariadenie sa odpojilo – nabudúce znova hrať automaticky cez BT. */
-    fun btGone() {
-        if (routeToPhone) {
-            routeToPhone = false
-            player?.setPreferredAudioDevice(null)
-        }
-    }
-
-    private fun applyRoute() {
-        val p = player ?: return
-        val c = appCtx ?: return
-        val dev = if (routeToPhone) findPhoneSpeaker(c) else findBtOutput(c)
-        try {
-            p.setPreferredAudioDevice(dev)
-        } catch (_: Exception) {
-        }
     }
 
     /** Zastaví hudbu a zavrie prehrávač. */
@@ -301,31 +269,18 @@ fun AudioScreen() {
             ActionPill(Icons.Rounded.Wifi, "Wi‑Fi / BT", Color(0xFF1D4ED8), Color(0xFFE8EFFE), Color(0xFFC3D4FB), Modifier.weight(1f)) {
                 nearby = true
             }
-            // Svieti (fialové + zelená bodka), keď hudba naozaj hrá cez BT reproduktor/slúchadlá.
-            // Ťuknutie keď svieti → hrá telefón. Ťuknutie keď nesvieti → hrá BT (alebo spárovanie).
+            // keď je pripojený BT reproduktor/slúchadlá, tlačidlo sa vyfarbí a ukáže názov zariadenia
             val bt = rememberBtOutput()
-            LaunchedEffect(bt) { if (bt == null) Audio.btGone() }
-            val active = bt != null && !Audio.routeToPhone
-            if (active && bt != null) {
+            if (bt != null) {
                 ActionPill(
-                    Icons.Rounded.Speaker, btName(bt), Color.White, Color(0xFF6D28D9), Color(0xFF6D28D9), Modifier.weight(1f),
+                    Icons.Rounded.Speaker, bt, Color.White, Color(0xFF6D28D9), Color(0xFF6D28D9), Modifier.weight(1f),
                     icon2 = Icons.Rounded.Headphones, connected = true
-                ) {
-                    Audio.routeTo(ctx, phone = true)
-                    Toast.makeText(ctx, tr("Hrá telefón", "Playing on phone"), Toast.LENGTH_SHORT).show()
-                }
+                ) { openOutputSwitcher(ctx) }
             } else {
                 ActionPill(
                     Icons.Rounded.Speaker, tr("BT reproduktor", "BT speaker"), Color(0xFF6D28D9), Color(0xFFF0EAFE), Color(0xFFD7C8FB),
                     Modifier.weight(1f), icon2 = Icons.Rounded.Headphones
-                ) {
-                    if (bt != null) {
-                        Audio.routeTo(ctx, phone = false)
-                        Toast.makeText(ctx, tr("Hrá v: ${btName(bt)}", "Playing on: ${btName(bt)}"), Toast.LENGTH_SHORT).show()
-                    } else {
-                        openOutputSwitcher(ctx)
-                    }
-                }
+                ) { openOutputSwitcher(ctx) }
             }
         }
 
