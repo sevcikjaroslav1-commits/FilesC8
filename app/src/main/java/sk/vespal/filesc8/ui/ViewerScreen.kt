@@ -165,7 +165,7 @@ fun ViewerScreen() {
                 Column(Modifier.weight(1f).padding(horizontal = 4.dp)) {
                     Text(cur.name, color = Color.White, fontSize = 15.sp, fontWeight = FontWeight.SemiBold, maxLines = 1, overflow = TextOverflow.Ellipsis)
                     Text(
-                        "${page + 1} / ${list.size} · ${fmtSize(cur.size)} · ${fmtDate(cur.modified)}",
+                        "${page + 1} / ${list.size} · ${fmtSize(cur.size)} · ${relTime(cur.modified)}",
                         color = Color.White.copy(alpha = 0.75f), fontSize = 12.sp, maxLines = 1
                     )
                 }

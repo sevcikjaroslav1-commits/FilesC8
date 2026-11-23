@@ -111,6 +111,35 @@ fun fmtDate(ms: Long): String {
     return SimpleDateFormat(pattern, loc()).format(Date(ms))
 }
 
+/**
+ * Čas od zmeny súboru: "práve teraz", "pred 5 minútami", "pred 3 hodinami", "včera",
+ * "pred 4 dňami" – staršie ako týždeň ukáže dátum.
+ */
+fun relTime(ms: Long): String {
+    val diff = System.currentTimeMillis() - ms
+    val min = diff / 60_000L
+    val hod = diff / 3_600_000L
+    val today = dayStart(System.currentTimeMillis())
+    val days = ((today - dayStart(ms)) / (24L * 3600 * 1000)).toInt()
+    val en = Lang.code == "en"
+    return when {
+        diff < 60_000L -> if (en) "just now" else "práve teraz"
+        min < 60 -> when {
+            en -> if (min == 1L) "1 minute ago" else "$min minutes ago"
+            min == 1L -> "pred minútou"
+            else -> "pred $min minútami"
+        }
+        hod < 24 && days == 0 -> when {
+            en -> if (hod == 1L) "1 hour ago" else "$hod hours ago"
+            hod == 1L -> "pred hodinou"
+            else -> "pred $hod hodinami"
+        }
+        days <= 1 -> if (en) "yesterday" else "včera"
+        days < 7 -> if (en) "$days days ago" else "pred $days dňami"
+        else -> fmtDate(ms)
+    }
+}
+
 /** "Dnes", "Včera", alebo dátum – nadpis skupiny. */
 fun dayLabel(ms: Long): String {
     val today = dayStart(System.currentTimeMillis())
@@ -416,7 +445,7 @@ fun FileRow(
         Column(Modifier.weight(1f).padding(horizontal = 12.dp)) {
             Text(item.name, fontSize = 15.sp, fontWeight = FontWeight.SemiBold, color = C.Ink, maxLines = 1, overflow = TextOverflow.Ellipsis)
             val meta = buildString {
-                append(fmtSize(item.size)); append(" · "); append(fmtDate(item.modified))
+                append(fmtSize(item.size)); append(" · "); append(relTime(item.modified))
                 if (showFolder) { append(" · "); append(item.folder) }
             }
             Text(meta, fontSize = 12.sp, color = C.Muted, maxLines = 1, overflow = TextOverflow.Ellipsis, modifier = Modifier.padding(top = 2.dp))

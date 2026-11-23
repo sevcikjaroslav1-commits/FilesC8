@@ -350,7 +350,7 @@ private fun FolderRow(e: Entry, selected: Boolean, selecting: Boolean, onClick: 
         Column(Modifier.weight(1f).padding(horizontal = 12.dp)) {
             Text(e.file.name, fontSize = 15.sp, fontWeight = FontWeight.SemiBold, color = C.Ink, maxLines = 1, overflow = TextOverflow.Ellipsis)
             Text(
-                "${itemsWord(e.children)} · ${fmtDate(e.file.lastModified())}",
+                "${itemsWord(e.children)} · ${relTime(e.file.lastModified())}",
                 fontSize = 12.sp, color = C.Muted, maxLines = 1, modifier = Modifier.padding(top = 2.dp)
             )
         }
