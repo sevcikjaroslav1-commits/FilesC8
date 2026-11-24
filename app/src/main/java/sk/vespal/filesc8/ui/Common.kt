@@ -7,6 +7,7 @@ import android.content.Intent
 import android.graphics.Bitmap
 import android.media.ThumbnailUtils
 import android.net.Uri
+import android.provider.Settings
 import android.util.LruCache
 import android.util.Size
 import android.widget.Toast
@@ -189,7 +190,48 @@ fun openFile(ctx: Context, item: FItem, list: List<FItem> = listOf(item)) {
     openExternal(ctx, item)
 }
 
+/** Inštalácia APK súboru – najprv si vypýta povolenie „Inštalovať neznáme aplikácie“, ak ho FilesC8 ešte nemá. */
+fun installApk(ctx: Context, item: FItem) {
+    if (!ctx.packageManager.canRequestPackageInstalls()) {
+        Toast.makeText(
+            ctx,
+            tr("Povoľ FilesC8 inštalovať aplikácie a potom znova ťukni na APK", "Allow FilesC8 to install apps, then tap the APK again"),
+            Toast.LENGTH_LONG
+        ).show()
+        try {
+            ctx.startActivity(
+                Intent(Settings.ACTION_MANAGE_UNKNOWN_APP_SOURCES, Uri.parse("package:" + ctx.packageName))
+                    .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+            )
+        } catch (_: Exception) {
+        }
+        return
+    }
+    try {
+        val i = Intent(Intent.ACTION_VIEW)
+            .setDataAndType(uriFor(ctx, item.path), "application/vnd.android.package-archive")
+            .addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_ACTIVITY_NEW_TASK)
+        ctx.startActivity(i)
+    } catch (e: Exception) {
+        Toast.makeText(ctx, tr("Inštaláciu sa nepodarilo spustiť", "Could not start the installation"), Toast.LENGTH_SHORT).show()
+    }
+}
+
 fun openExternal(ctx: Context, item: FItem) {
+    when (item.ext) {
+        "apk" -> {
+            installApk(ctx, item)
+            return
+        }
+        "apks", "xapk" -> {
+            Toast.makeText(
+                ctx,
+                tr("Tento balík (.${item.ext}) Android nevie nainštalovať priamo – použi APK", "Android can't install .${item.ext} bundles directly – use an APK"),
+                Toast.LENGTH_LONG
+            ).show()
+            return
+        }
+    }
     try {
         val mime = if (item.mime == "*/*") mimeOf(item.name) else item.mime
         val i = Intent(Intent.ACTION_VIEW)

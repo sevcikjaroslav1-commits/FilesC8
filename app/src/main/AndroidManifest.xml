@@ -8,6 +8,8 @@
         tools:ignore="ScopedStorage" />
     <!-- Odinštalovanie aplikácií zo zoznamu Aplikácie -->
     <uses-permission android:name="android.permission.REQUEST_DELETE_PACKAGES" />
+    <!-- Inštalácia APK súborov zo Stiahnutých (správca súborov) -->
+    <uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES" />
 
     <!-- Zoznam nainštalovaných aplikácií (tie, ktoré majú ikonu v launcheri) -->
     <queries>
